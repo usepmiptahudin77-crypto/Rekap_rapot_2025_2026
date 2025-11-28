@@ -1,0 +1,2837 @@
+<!doctype html>
+<html lang="id">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rekap Rapot Sekolah</title>
+  <script src="/_sdk/data_sdk.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      min-height: 100%;
+      width: 100%;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    .container {
+      width: 100%;
+      min-height: 100%;
+      padding: 32px 24px;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #d4af37 0%, #f4e5a1 100%);
+      color: #1e3c72;
+      padding: 32px;
+      border-radius: 16px;
+      text-align: center;
+      margin-bottom: 32px;
+      box-shadow: 0 8px 24px rgba(212, 175, 55, 0.3);
+    }
+    
+    .header h1 {
+      margin: 0 0 12px 0;
+      font-size: 32px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .header h2 {
+      margin: 0 0 8px 0;
+      font-size: 24px;
+      font-weight: 600;
+    }
+    
+    .header p {
+      margin: 4px 0;
+      font-size: 15px;
+      opacity: 0.9;
+    }
+    
+    .content-wrapper {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-section {
+      margin-bottom: 32px;
+      padding-bottom: 32px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    
+    .form-section h3 {
+      color: #1e3c72;
+      font-size: 22px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      color: #333;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: all 0.3s;
+    }
+    
+    .form-group input:focus {
+      outline: none;
+      border-color: #d4af37;
+      box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+    }
+    
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .semester-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+    
+    .semester-col h4 {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      color: white;
+      padding: 12px;
+      text-align: center;
+      border-radius: 8px;
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    
+    .subject-row {
+      display: contents;
+    }
+    
+    .subject-label {
+      grid-column: 1 / -1;
+      background: #f5f5f5;
+      padding: 10px 12px;
+      font-weight: 600;
+      color: #333;
+      border-radius: 6px;
+      margin-top: 8px;
+      font-size: 14px;
+    }
+    
+    .semester-col input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 600;
+    }
+    
+    .btn {
+      padding: 14px 32px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #d4af37 0%, #f4e5a1 100%);
+      color: #1e3c72;
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    }
+    
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(212, 175, 55, 0.4);
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+      margin-left: 12px;
+    }
+    
+    .btn-secondary:hover {
+      background: #5a6268;
+    }
+    
+    .btn-delete {
+      background: #dc3545;
+      color: white;
+      padding: 8px 16px;
+      font-size: 14px;
+    }
+    
+    .btn-delete:hover {
+      background: #c82333;
+    }
+    
+    .btn-print {
+      background: #28a745;
+      color: white;
+      padding: 8px 16px;
+      font-size: 14px;
+      margin-left: 8px;
+    }
+    
+    .btn-print:hover {
+      background: #218838;
+    }
+    
+    .records-section {
+      margin-top: 32px;
+    }
+    
+    .records-section h3 {
+      color: #1e3c72;
+      font-size: 22px;
+      margin-bottom: 20px;
+    }
+    
+    .record-card {
+      background: #f8f9fa;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      transition: all 0.3s;
+    }
+    
+    .record-card:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      border-color: #d4af37;
+    }
+    
+    .record-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #d4af37;
+    }
+    
+    .record-info h4 {
+      color: #1e3c72;
+      font-size: 20px;
+      margin: 0 0 4px 0;
+    }
+    
+    .record-info p {
+      color: #666;
+      margin: 0;
+      font-size: 14px;
+    }
+    
+    .grades-table {
+      width: 100%;
+      overflow-x: auto;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    
+    th {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      color: white;
+      padding: 12px 8px;
+      text-align: center;
+      font-weight: 600;
+    }
+    
+    td {
+      padding: 10px 8px;
+      text-align: center;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    td:first-child {
+      text-align: left;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    tr:hover {
+      background: #f0f0f0;
+    }
+    
+    .avg-row {
+      background: #d4af37 !important;
+      font-weight: bold;
+      color: #1e3c72;
+    }
+    
+    .avg-row td {
+      border-bottom: none;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: #666;
+    }
+    
+    .empty-state svg {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 16px;
+      opacity: 0.3;
+    }
+    
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    
+    .login-container {
+      width: 100%;
+      min-height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+    }
+    
+    .login-box {
+      background: white;
+      border-radius: 16px;
+      padding: 48px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      max-width: 480px;
+      width: 100%;
+    }
+    
+    .login-box h2 {
+      color: #1e3c72;
+      font-size: 28px;
+      margin: 0 0 8px 0;
+      text-align: center;
+    }
+    
+    .login-box p {
+      color: #666;
+      text-align: center;
+      margin: 0 0 32px 0;
+      font-size: 15px;
+    }
+    
+    .login-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 32px;
+      background: #f5f5f5;
+      border-radius: 12px;
+      padding: 4px;
+    }
+    
+    .login-tab {
+      flex: 1;
+      padding: 12px 20px;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      color: #666;
+    }
+    
+    .login-tab.active {
+      background: white;
+      color: #1e3c72;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .login-form {
+      display: none;
+    }
+    
+    .login-form.active {
+      display: block;
+    }
+    
+    .login-form .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .login-form label {
+      display: block;
+      color: #333;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    
+    .login-form input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: all 0.3s;
+    }
+    
+    .login-form input:focus {
+      outline: none;
+      border-color: #d4af37;
+      box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+    }
+    
+    .login-btn {
+      width: 100%;
+      padding: 14px 32px;
+      background: linear-gradient(135deg, #d4af37 0%, #f4e5a1 100%);
+      color: #1e3c72;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    }
+    
+    .login-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(212, 175, 55, 0.4);
+    }
+    
+    .login-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .error-message {
+      background: #fee;
+      color: #c33;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      display: none;
+    }
+    
+    .error-message.show {
+      display: block;
+    }
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 20px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      margin-bottom: 24px;
+    }
+    
+    .user-info-text {
+      flex: 1;
+      color: white;
+    }
+    
+    .user-info-text strong {
+      display: block;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+    
+    .user-info-text span {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+    
+    .logout-btn {
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.3);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .logout-btn:hover {
+      background: rgba(255, 255, 255, 0.4);
+      border-color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .hidden {
+      display: none;
+    }
+    
+    .limit-warning {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      color: #856404;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+    
+    .dashboard-section {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      margin-bottom: 32px;
+    }
+    
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 2px solid #e0e0e0;
+      margin-bottom: 24px;
+    }
+    
+    .nav-tab {
+      padding: 12px 24px;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      color: #666;
+    }
+    
+    .nav-tab:hover {
+      color: #1e3c72;
+    }
+    
+    .nav-tab.active {
+      color: #1e3c72;
+      border-bottom-color: #d4af37;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .student-selector {
+      margin-bottom: 24px;
+    }
+    
+    .student-selector label {
+      display: block;
+      color: #333;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    
+    .student-selector select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 15px;
+      background: white;
+      cursor: pointer;
+    }
+    
+    .student-selector select:focus {
+      outline: none;
+      border-color: #d4af37;
+      box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+    }
+    
+    .semester-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .semester-card {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3);
+    }
+    
+    .semester-card h4 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    
+    .semester-card .score {
+      font-size: 32px;
+      font-weight: bold;
+      margin: 0;
+    }
+    
+    .overall-card {
+      background: linear-gradient(135deg, #d4af37 0%, #f4e5a1 100%);
+      color: #1e3c72;
+      padding: 24px;
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    }
+    
+    .overall-card h3 {
+      margin: 0 0 12px 0;
+      font-size: 18px;
+    }
+    
+    .overall-card .score {
+      font-size: 48px;
+      font-weight: bold;
+      margin: 0;
+    }
+    
+    .chart-container {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      border: 2px solid #e0e0e0;
+      margin-bottom: 24px;
+    }
+    
+    .chart-container h4 {
+      color: #1e3c72;
+      font-size: 18px;
+      margin: 0 0 16px 0;
+    }
+    
+    .subject-table {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 20px;
+      overflow-x: auto;
+    }
+    
+    .subject-table h4 {
+      color: #1e3c72;
+      font-size: 18px;
+      margin: 0 0 16px 0;
+    }
+    
+    @media (max-width: 768px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+      
+      .semester-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .header h1 {
+        font-size: 24px;
+      }
+      
+      .header h2 {
+        font-size: 18px;
+      }
+      
+      .container {
+        padding: 16px;
+      }
+      
+      .content-wrapper {
+        padding: 20px;
+      }
+      
+      .nav-tabs {
+        overflow-x: auto;
+      }
+      
+      .nav-tab {
+        padding: 10px 16px;
+        font-size: 14px;
+      }
+      
+      .semester-cards {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body><!-- Edit Modal -->
+  <div id="edit-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 9999; overflow-y: auto;">
+   <div style="min-height: 100%; display: flex; align-items: center; justify-content: center; padding: 32px 16px;">
+    <div style="background: white; border-radius: 16px; padding: 32px; max-width: 1200px; width: 100%; max-height: 90%; overflow-y: auto; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
+     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <h3 style="color: #1e3c72; font-size: 24px; margin: 0;">✏️ Edit Data Siswa</h3><button onclick="closeEditModal()" style="background: none; border: none; font-size: 32px; cursor: pointer; color: #666; line-height: 1; padding: 0; width: 32px; height: 32px;">×</button>
+     </div>
+     <form id="edit-form">
+      <div class="form-row">
+       <div class="form-group"><label for="edit-nama-siswa">Nama Siswa</label> <input type="text" id="edit-nama-siswa" required placeholder="Masukkan nama lengkap siswa">
+       </div>
+       <div class="form-group"><label for="edit-nis">NIS (Nomor Induk Siswa)</label> <input type="text" id="edit-nis" required placeholder="Masukkan NIS">
+       </div>
+      </div>
+      <h4 style="color: #1e3c72; margin: 24px 0 16px 0;">Nilai Mata Pelajaran (Semester 1-5)</h4>
+      <div class="semester-grid">
+       <div class="semester-col">
+        <h4>Semester 1</h4>
+       </div>
+       <div class="semester-col">
+        <h4>Semester 2</h4>
+       </div>
+       <div class="semester-col">
+        <h4>Semester 3</h4>
+       </div>
+       <div class="semester-col">
+        <h4>Semester 4</h4>
+       </div>
+       <div class="semester-col">
+        <h4>Semester 5</h4>
+       </div>
+       <div class="subject-label">
+        1. Pendidikan Agama Islam
+       </div><input type="number" id="edit-s1-pai" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s2-pai" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s3-pai" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s4-pai" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s5-pai" min="0" max="100" placeholder="0-100">
+       <div class="subject-label">
+        2. Pendidikan Kewarganegaraan
+       </div><input type="number" id="edit-s1-pkn" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s2-pkn" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s3-pkn" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s4-pkn" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s5-pkn" min="0" max="100" placeholder="0-100">
+       <div class="subject-label">
+        3. Bahasa Indonesia
+       </div><input type="number" id="edit-s1-bind" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s2-bind" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s3-bind" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s4-bind" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s5-bind" min="0" max="100" placeholder="0-100">
+       <div class="subject-label">
+        4. Bahasa Inggris
+       </div><input type="number" id="edit-s1-bing" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s2-bing" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s3-bing" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s4-bing" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s5-bing" min="0" max="100" placeholder="0-100">
+       <div class="subject-label">
+        5. Matematika
+       </div><input type="number" id="edit-s1-mtk" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s2-mtk" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s3-mtk" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s4-mtk" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s5-mtk" min="0" max="100" placeholder="0-100">
+       <div class="subject-label">
+        6. Ilmu Pengetahuan Alam
+       </div><input type="number" id="edit-s1-ipa" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s2-ipa" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s3-ipa" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s4-ipa" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s5-ipa" min="0" max="100" placeholder="0-100">
+       <div class="subject-label">
+        7. Ilmu Pengetahuan Sosial
+       </div><input type="number" id="edit-s1-ips" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s2-ips" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s3-ips" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s4-ips" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s5-ips" min="0" max="100" placeholder="0-100">
+       <div class="subject-label">
+        8. Seni Budaya &amp; Prakarya
+       </div><input type="number" id="edit-s1-senbud" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s2-senbud" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s3-senbud" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s4-senbud" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s5-senbud" min="0" max="100" placeholder="0-100">
+       <div class="subject-label">
+        9. Pendidikan Jasmani &amp; Kesehatan
+       </div><input type="number" id="edit-s1-pjok" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s2-pjok" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s3-pjok" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s4-pjok" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s5-pjok" min="0" max="100" placeholder="0-100">
+       <div class="subject-label">
+        10. Informatika
+       </div><input type="number" id="edit-s1-informatika" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s2-informatika" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s3-informatika" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s4-informatika" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s5-informatika" min="0" max="100" placeholder="0-100">
+       <div class="subject-label">
+        11. Bahasa Sunda
+       </div><input type="number" id="edit-s1-bsunda" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s2-bsunda" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s3-bsunda" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s4-bsunda" min="0" max="100" placeholder="0-100"> <input type="number" id="edit-s5-bsunda" min="0" max="100" placeholder="0-100">
+      </div>
+      <div style="margin-top: 32px; display: flex; gap: 12px; justify-content: flex-end;"><button type="button" class="btn btn-secondary" onclick="closeEditModal()"> ❌ Batal </button> <button type="submit" class="btn btn-primary" id="edit-submit-btn"> 💾 Simpan Perubahan </button>
+      </div>
+     </form>
+    </div>
+   </div>
+  </div><!-- Login Screen -->
+  <div class="login-container" id="login-screen">
+   <div class="login-box">
+    <h2>🔐 Sistem Login Rapot</h2>
+    <p>Pilih jenis akses Anda</p>
+    <div class="login-tabs"><button class="login-tab active" onclick="switchLoginTab('admin')">👨‍💼 Admin</button> <button class="login-tab" onclick="switchLoginTab('siswa')">👨‍🎓 Siswa</button>
+    </div><!-- Admin Login Form -->
+    <form class="login-form active" id="admin-login-form" onsubmit="loginAdmin(event)">
+     <div class="error-message" id="admin-error"></div>
+     <div class="form-group"><label for="admin-username">Username Admin</label> <input type="text" id="admin-username" placeholder="Masukkan username" required>
+     </div>
+     <div class="form-group"><label for="admin-password">Password</label> <input type="password" id="admin-password" placeholder="Masukkan password" required>
+     </div><button type="submit" class="login-btn">🔓 Login sebagai Admin</button>
+    </form><!-- Student Login Form -->
+    <form class="login-form" id="siswa-login-form" onsubmit="loginSiswa(event)">
+     <div class="error-message" id="siswa-error"></div>
+     <div class="form-group"><label for="siswa-nis">NIS (Nomor Induk Siswa)</label> <input type="text" id="siswa-nis" placeholder="Masukkan NIS Anda" required>
+     </div><button type="submit" class="login-btn">🔓 Login sebagai Siswa</button>
+     <div style="margin-top: 20px; padding: 16px; background: #fff3cd; border-radius: 8px; font-size: 13px; color: #856404;"><strong>ℹ️ Info:</strong> Gunakan NIS yang terdaftar di sistem untuk melihat rapot Anda
+     </div>
+    </form>
+   </div>
+  </div><!-- Main App (Hidden until logged in) -->
+  <div class="container hidden" id="main-app">
+   <div class="header">
+    <div class="user-info" id="user-info-display">
+     <div class="user-info-text"><strong id="user-display-name">Admin</strong> <span id="user-display-role">Administrator</span>
+     </div><button class="logout-btn" onclick="logout()">🚪 Logout</button>
+    </div>
+    <h1 id="page-title">Rekap Rapot 5 Semester</h1>
+    <h2 id="school-name">USB SMP 59 Kota Bekasi</h2>
+    <p id="school-address">Jl. Pangkalan 2 RT. 003 RW. 008 Bantargebang Kec. Bantargebang Kota Bekasi</p>
+    <p id="academic-year">Tahun Ajaran 2025/2026</p>
+   </div>
+   <div class="nav-tabs"><button class="nav-tab" onclick="switchTab('admin')" id="tab-admin">👨‍💼 Admin</button> <button class="nav-tab" onclick="switchTab('input')" id="tab-input">✏️ Input Mandiri</button> <button class="nav-tab" onclick="switchTab('dashboard')" id="tab-dashboard">📊 Dashboard Siswa</button>
+   </div>
+   <div class="tab-content" id="content-admin">
+    <div class="content-wrapper">
+     <div class="form-section">
+      <h3>📝 Tambah Data Siswa</h3>
+      <div id="limit-warning" class="limit-warning" style="display: none;">
+       Batas maksimum 999 data siswa telah tercapai. Silakan hapus beberapa data terlebih dahulu.
+      </div>
+      <div style="background: #e7f3ff; border: 2px solid #2196F3; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+       <h4 style="color: #1e3c72; margin: 0 0 12px 0; font-size: 16px;">📂 Import Data dari Excel/CSV</h4>
+       <p style="margin: 0 0 12px 0; font-size: 14px; color: #555;">Upload file Excel (.xlsx, .xls) atau CSV (.csv) dengan format yang sesuai</p><input type="file" id="file-import" accept=".xlsx,.xls,.csv" style="display: none;"> <button type="button" class="btn btn-primary" onclick="document.getElementById('file-import').click()" style="padding: 10px 20px; font-size: 14px;"> 📁 Pilih File </button> <button type="button" class="btn btn-secondary" onclick="downloadTemplate()" style="padding: 10px 20px; font-size: 14px;"> 📥 Download Template </button>
+       <div id="import-status" style="margin-top: 12px; font-size: 14px;"></div>
+      </div>
+      <form id="student-form">
+       <div class="form-row">
+        <div class="form-group"><label for="nama-siswa">Nama Siswa</label> <input type="text" id="nama-siswa" required placeholder="Masukkan nama lengkap siswa">
+        </div>
+        <div class="form-group"><label for="nis">NIS (Nomor Induk Siswa)</label> <input type="text" id="nis" required placeholder="Masukkan NIS">
+        </div>
+       </div>
+       <h4 style="color: #1e3c72; margin: 24px 0 16px 0;">Nilai Mata Pelajaran (Semester 1-5)</h4>
+       <div class="semester-grid">
+        <div class="semester-col">
+         <h4>Semester 1</h4>
+        </div>
+        <div class="semester-col">
+         <h4>Semester 2</h4>
+        </div>
+        <div class="semester-col">
+         <h4>Semester 3</h4>
+        </div>
+        <div class="semester-col">
+         <h4>Semester 4</h4>
+        </div>
+        <div class="semester-col">
+         <h4>Semester 5</h4>
+        </div>
+        <div class="subject-label">
+         1. Pendidikan Agama Islam
+        </div><input type="number" id="s1-pai" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s2-pai" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s3-pai" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s4-pai" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s5-pai" min="0" max="100" placeholder="0-100 (opsional)">
+        <div class="subject-label">
+         2. Pendidikan Kewarganegaraan
+        </div><input type="number" id="s1-pkn" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s2-pkn" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s3-pkn" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s4-pkn" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s5-pkn" min="0" max="100" placeholder="0-100 (opsional)">
+        <div class="subject-label">
+         3. Bahasa Indonesia
+        </div><input type="number" id="s1-bind" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s2-bind" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s3-bind" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s4-bind" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s5-bind" min="0" max="100" placeholder="0-100 (opsional)">
+        <div class="subject-label">
+         4. Bahasa Inggris
+        </div><input type="number" id="s1-bing" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s2-bing" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s3-bing" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s4-bing" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s5-bing" min="0" max="100" placeholder="0-100 (opsional)">
+        <div class="subject-label">
+         5. Matematika
+        </div><input type="number" id="s1-mtk" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s2-mtk" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s3-mtk" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s4-mtk" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s5-mtk" min="0" max="100" placeholder="0-100 (opsional)">
+        <div class="subject-label">
+         6. Ilmu Pengetahuan Alam
+        </div><input type="number" id="s1-ipa" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s2-ipa" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s3-ipa" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s4-ipa" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s5-ipa" min="0" max="100" placeholder="0-100 (opsional)">
+        <div class="subject-label">
+         7. Ilmu Pengetahuan Sosial
+        </div><input type="number" id="s1-ips" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s2-ips" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s3-ips" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s4-ips" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s5-ips" min="0" max="100" placeholder="0-100 (opsional)">
+        <div class="subject-label">
+         8. Seni Budaya &amp; Prakarya
+        </div><input type="number" id="s1-senbud" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s2-senbud" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s3-senbud" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s4-senbud" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s5-senbud" min="0" max="100" placeholder="0-100 (opsional)">
+        <div class="subject-label">
+         9. Pendidikan Jasmani &amp; Kesehatan
+        </div><input type="number" id="s1-pjok" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s2-pjok" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s3-pjok" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s4-pjok" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s5-pjok" min="0" max="100" placeholder="0-100 (opsional)">
+        <div class="subject-label">
+         10. Informatika
+        </div><input type="number" id="s1-informatika" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s2-informatika" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s3-informatika" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s4-informatika" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s5-informatika" min="0" max="100" placeholder="0-100 (opsional)">
+        <div class="subject-label">
+         11. Bahasa Sunda
+        </div><input type="number" id="s1-bsunda" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s2-bsunda" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s3-bsunda" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s4-bsunda" min="0" max="100" placeholder="0-100 (opsional)"> <input type="number" id="s5-bsunda" min="0" max="100" placeholder="0-100 (opsional)">
+       </div>
+       <div style="margin-top: 24px; position: sticky; bottom: 20px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1); z-index: 100;"><button type="submit" class="btn btn-primary" id="submit-btn"> 💾 Simpan Data Siswa </button> <button type="button" class="btn btn-secondary" id="reset-btn"> 🔄 Reset Form </button>
+       </div>
+      </form>
+     </div>
+     <div class="records-section">
+      <h3>📊 Data Rapot Siswa</h3>
+      <div id="records-container"></div>
+     </div>
+    </div>
+   </div>
+   <div class="tab-content" id="content-input">
+    <div class="content-wrapper">
+     <h3 style="color: #1e3c72; font-size: 24px; margin-bottom: 20px;">✏️ Input Data Mandiri</h3>
+     <div class="student-selector" style="margin-bottom: 24px;"><label for="student-select-input">Pilih atau Tambah Siswa:</label>
+      <div style="display: flex; gap: 12px; align-items: flex-start;">
+       <div style="flex: 1;"><select id="student-select-input" onchange="loadStudentData()" style="width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; background: white; cursor: pointer;"> <option value="">-- Pilih Siswa Existing atau Buat Baru --</option> <option value="__NEW__" style="font-weight: bold; color: #1e3c72;">➕ Tambah Siswa Baru</option> </select>
+       </div>
+      </div>
+     </div>
+     <div id="new-student-section" style="display: none; background: #e7f3ff; border: 2px solid #2196F3; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+      <h4 style="color: #1e3c72; margin: 0 0 16px 0; font-size: 18px;">👤 Data Siswa Baru</h4>
+      <div class="form-row">
+       <div class="form-group"><label for="new-nama-siswa">Nama Siswa</label> <input type="text" id="new-nama-siswa" placeholder="Masukkan nama lengkap siswa" required>
+       </div>
+       <div class="form-group"><label for="new-nis">NIS (Nomor Induk Siswa)</label> <input type="text" id="new-nis" placeholder="Masukkan NIS" required>
+       </div>
+      </div>
+     </div>
+     <div id="input-form-section" style="display: none;">
+      <div style="background: linear-gradient(135deg, #d4af37 0%, #f4e5a1 100%); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+       <h4 style="color: #1e3c72; margin: 0 0 8px 0; font-size: 18px;">📝 Input Nilai Per Mata Pelajaran</h4>
+       <p style="color: #1e3c72; margin: 0; font-size: 14px;" id="current-student-info">Pilih siswa untuk mulai input nilai</p>
+      </div>
+      <div class="form-section">
+       <div style="margin-bottom: 20px;"><label for="subject-select" style="display: block; color: #333; font-weight: 600; margin-bottom: 8px; font-size: 14px;">Pilih Mata Pelajaran:</label> <select id="subject-select" onchange="updateSemesterInputs()" style="width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; background: white; cursor: pointer;"> <option value="">-- Pilih Mata Pelajaran --</option> <option value="pai">1. Pendidikan Agama Islam</option> <option value="pkn">2. Pendidikan Kewarganegaraan</option> <option value="bind">3. Bahasa Indonesia</option> <option value="bing">4. Bahasa Inggris</option> <option value="mtk">5. Matematika</option> <option value="ipa">6. Ilmu Pengetahuan Alam</option> <option value="ips">7. Ilmu Pengetahuan Sosial</option> <option value="senbud">8. Seni Budaya &amp; Prakarya</option> <option value="pjok">9. Pendidikan Jasmani &amp; Kesehatan</option> <option value="informatika">10. Informatika</option> <option value="bsunda">11. Bahasa Sunda</option> </select>
+       </div>
+       <div id="semester-inputs-container" style="display: none;">
+        <h4 style="color: #1e3c72; margin: 0 0 16px 0; font-size: 16px;">Nilai Semester 1 - 5</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;">
+         <div class="form-group"><label for="input-sem1">Semester 1</label> <input type="number" id="input-sem1" min="0" max="100" placeholder="0-100">
+         </div>
+         <div class="form-group"><label for="input-sem2">Semester 2</label> <input type="number" id="input-sem2" min="0" max="100" placeholder="0-100">
+         </div>
+         <div class="form-group"><label for="input-sem3">Semester 3</label> <input type="number" id="input-sem3" min="0" max="100" placeholder="0-100">
+         </div>
+         <div class="form-group"><label for="input-sem4">Semester 4</label> <input type="number" id="input-sem4" min="0" max="100" placeholder="0-100">
+         </div>
+         <div class="form-group"><label for="input-sem5">Semester 5</label> <input type="number" id="input-sem5" min="0" max="100" placeholder="0-100">
+         </div>
+        </div>
+        <div style="margin-top: 24px; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1); position: sticky; bottom: 0; z-index: 10;"><button type="button" class="btn btn-primary" id="save-grades-btn" onclick="saveGrades()"> 💾 Simpan Nilai </button> <button type="button" class="btn btn-secondary" onclick="clearInputs()"> 🔄 Reset Nilai </button>
+        </div>
+       </div>
+      </div>
+      <div id="student-progress-section" style="margin-top: 32px;">
+       <h4 style="color: #1e3c72; font-size: 18px; margin-bottom: 16px;">�� Progress Input Nilai</h4>
+       <div id="progress-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;"></div>
+      </div>
+     </div>
+    </div>
+   </div>
+   <div class="tab-content" id="content-dashboard">
+    <div class="dashboard-section">
+     <h3 style="color: #1e3c72; font-size: 24px; margin-bottom: 20px;">📊 Dashboard Nilai Siswa</h3>
+     <div class="student-selector"><label for="student-select">Pilih Siswa:</label>
+      <div style="display: flex; gap: 12px; align-items: flex-end;">
+       <div style="flex: 1;"><select id="student-select" onchange="updateDashboard()"> <option value="">-- Pilih Siswa --</option> </select>
+       </div><button class="btn" style="background: #17a2b8; color: white; padding: 8px 16px; font-size: 14px;" id="dashboard-input-btn" onclick="showInputSemester5()"> ✏️ Input Semester 5 </button> <button class="btn btn-print" id="dashboard-print-btn" onclick="printDashboardPDF()" style="display: none;"> 🖨️ Cetak Rekap PDF </button>
+      </div>
+     </div><!-- Input Semester 5 Section -->
+     <div id="input-semester-5-section" style="display: none; background: #e7f3ff; border: 2px solid #2196F3; border-radius: 12px; padding: 24px; margin-top: 24px;">
+      <h4 style="color: #1e3c72; font-size: 18px; margin: 0 0 16px 0;">✏️ Input Nilai Semester 5</h4>
+      <p style="color: #666; margin: 0 0 20px 0; font-size: 14px;">Isi nilai untuk semua mata pelajaran semester 5</p>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+       <div class="form-group"><label for="input-dash-pai">Pendidikan Agama Islam</label> <input type="number" id="input-dash-pai" min="0" max="100" placeholder="0-100">
+       </div>
+       <div class="form-group"><label for="input-dash-pkn">Pendidikan Kewarganegaraan</label> <input type="number" id="input-dash-pkn" min="0" max="100" placeholder="0-100">
+       </div>
+       <div class="form-group"><label for="input-dash-bind">Bahasa Indonesia</label> <input type="number" id="input-dash-bind" min="0" max="100" placeholder="0-100">
+       </div>
+       <div class="form-group"><label for="input-dash-bing">Bahasa Inggris</label> <input type="number" id="input-dash-bing" min="0" max="100" placeholder="0-100">
+       </div>
+       <div class="form-group"><label for="input-dash-mtk">Matematika</label> <input type="number" id="input-dash-mtk" min="0" max="100" placeholder="0-100">
+       </div>
+       <div class="form-group"><label for="input-dash-ipa">Ilmu Pengetahuan Alam</label> <input type="number" id="input-dash-ipa" min="0" max="100" placeholder="0-100">
+       </div>
+       <div class="form-group"><label for="input-dash-ips">Ilmu Pengetahuan Sosial</label> <input type="number" id="input-dash-ips" min="0" max="100" placeholder="0-100">
+       </div>
+       <div class="form-group"><label for="input-dash-senbud">Seni Budaya &amp; Prakarya</label> <input type="number" id="input-dash-senbud" min="0" max="100" placeholder="0-100">
+       </div>
+       <div class="form-group"><label for="input-dash-pjok">Pendidikan Jasmani &amp; Kesehatan</label> <input type="number" id="input-dash-pjok" min="0" max="100" placeholder="0-100">
+       </div>
+       <div class="form-group"><label for="input-dash-informatika">Informatika</label> <input type="number" id="input-dash-informatika" min="0" max="100" placeholder="0-100">
+       </div>
+       <div class="form-group"><label for="input-dash-bsunda">Bahasa Sunda</label> <input type="number" id="input-dash-bsunda" min="0" max="100" placeholder="0-100">
+       </div>
+      </div>
+      <div style="margin-top: 24px; display: flex; gap: 12px;"><button class="btn btn-primary" id="save-semester-5-btn" onclick="saveSemester5()"> 💾 Simpan Nilai Semester 5 </button> <button class="btn btn-secondary" onclick="cancelInputSemester5()"> ❌ Batal </button>
+      </div>
+     </div>
+     <div id="dashboard-content" style="display: none;">
+      <div class="overall-card">
+       <h3>RATA-RATA KESELURUHAN (5 SEMESTER)</h3>
+       <p class="score" id="overall-average">0.00</p>
+      </div>
+      <div class="semester-cards">
+       <div class="semester-card">
+        <h4>Semester 1</h4>
+        <p class="score" id="avg-sem1">0.00</p>
+       </div>
+       <div class="semester-card">
+        <h4>Semester 2</h4>
+        <p class="score" id="avg-sem2">0.00</p>
+       </div>
+       <div class="semester-card">
+        <h4>Semester 3</h4>
+        <p class="score" id="avg-sem3">0.00</p>
+       </div>
+       <div class="semester-card">
+        <h4>Semester 4</h4>
+        <p class="score" id="avg-sem4">0.00</p>
+       </div>
+       <div class="semester-card">
+        <h4>Semester 5</h4>
+        <p class="score" id="avg-sem5">0.00</p>
+       </div>
+      </div>
+      <div class="chart-container">
+       <h4>📈 Grafik Perkembangan Nilai Per Semester</h4>
+       <canvas id="semesterChart"></canvas>
+      </div>
+      <div class="chart-container">
+       <h4>📊 Grafik Nilai Per Mata Pelajaran</h4>
+       <canvas id="subjectChart"></canvas>
+      </div>
+      <div class="subject-table">
+       <h4>📋 Tabel Detail Nilai Per Mata Pelajaran</h4>
+       <div style="overflow-x: auto;">
+        <table id="detail-table">
+         <thead>
+          <tr>
+           <th>Mata Pelajaran</th>
+           <th>Sem 1</th>
+           <th>Sem 2</th>
+           <th>Sem 3</th>
+           <th>Sem 4</th>
+           <th>Sem 5</th>
+           <th>Rata-rata</th>
+          </tr>
+         </thead>
+         <tbody id="detail-table-body">
+         </tbody>
+        </table>
+       </div>
+      </div>
+     </div>
+     <div id="dashboard-empty" style="text-align: center; padding: 48px 24px; color: #666;">
+      <svg viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 80px; height: 80px; margin-bottom: 16px; opacity: 0.3;"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      </svg>
+      <h4>Pilih Siswa untuk Melihat Dashboard</h4>
+      <p>Pilih nama siswa dari dropdown di atas untuk melihat rekap nilai dan grafik perkembangan</p>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+    const defaultConfig = {
+      school_name: "USB SMP 59 Kota Bekasi",
+      school_address: "Jl. Pangkalan 2 RT. 003 RW. 008 Bantargebang Kec. Bantargebang Kota Bekasi",
+      academic_year: "2025/2026",
+      page_title: "Rekap Rapot 5 Semester",
+      background_color: "#1e3c72",
+      header_color: "#d4af37",
+      text_color: "#333333",
+      primary_button_color: "#d4af37",
+      accent_color: "#2a5298"
+    };
+
+    let allRecords = [];
+    let isLoading = false;
+    let semesterChart = null;
+    let subjectChart = null;
+    let currentTab = 'admin';
+    let currentInputStudent = null;
+    let isNewStudent = false;
+    
+    // Login state
+    let currentUser = null;
+    let userRole = null; // 'admin' or 'siswa'
+    
+    // Admin credentials (in production, this should be in backend)
+    const ADMIN_CREDENTIALS = {
+      username: 'admin',
+      password: 'Usep(77)'
+    };
+    
+    // Switch login tab
+    function switchLoginTab(tab) {
+      // Update tab buttons
+      document.querySelectorAll('.login-tab').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      // Update forms
+      document.getElementById('admin-login-form').classList.remove('active');
+      document.getElementById('siswa-login-form').classList.remove('active');
+      
+      if (tab === 'admin') {
+        document.getElementById('admin-login-form').classList.add('active');
+      } else {
+        document.getElementById('siswa-login-form').classList.add('active');
+      }
+      
+      // Clear error messages
+      document.getElementById('admin-error').classList.remove('show');
+      document.getElementById('siswa-error').classList.remove('show');
+    }
+    
+    // Admin login
+    function loginAdmin(event) {
+      event.preventDefault();
+      
+      const username = document.getElementById('admin-username').value;
+      const password = document.getElementById('admin-password').value;
+      const errorDiv = document.getElementById('admin-error');
+      
+      if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+        currentUser = { name: 'Administrator', username: username };
+        userRole = 'admin';
+        
+        // Show main app
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('main-app').classList.remove('hidden');
+        
+        // Update user display
+        document.getElementById('user-display-name').textContent = currentUser.name;
+        document.getElementById('user-display-role').textContent = '👨‍💼 Administrator';
+        
+        // Show admin tabs
+        document.getElementById('tab-admin').style.display = 'inline-block';
+        document.getElementById('tab-input').style.display = 'inline-block';
+        document.getElementById('tab-dashboard').style.display = 'inline-block';
+        
+        switchTab('admin');
+      } else {
+        errorDiv.textContent = '❌ Username atau password salah!';
+        errorDiv.classList.add('show');
+      }
+    }
+    
+    // Student login
+    function loginSiswa(event) {
+      event.preventDefault();
+      
+      const nis = document.getElementById('siswa-nis').value.trim();
+      const errorDiv = document.getElementById('siswa-error');
+      
+      // Find student by NIS
+      const student = allRecords.find(r => r.nis === nis);
+      
+      if (student) {
+        currentUser = student;
+        userRole = 'siswa';
+        
+        // Show main app
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('main-app').classList.remove('hidden');
+        
+        // Update user display
+        document.getElementById('user-display-name').textContent = student.nama_siswa;
+        document.getElementById('user-display-role').textContent = `👨‍🎓 Siswa - NIS: ${student.nis}`;
+        
+        // Hide admin tabs for students
+        document.getElementById('tab-admin').style.display = 'none';
+        document.getElementById('tab-input').style.display = 'none';
+        document.getElementById('tab-dashboard').style.display = 'inline-block';
+        
+        // Automatically select this student and show dashboard
+        switchTab('dashboard');
+        document.getElementById('student-select').value = student.__backendId;
+        updateDashboard();
+        
+        // Disable student selector for student users
+        document.getElementById('student-select').disabled = true;
+      } else {
+        errorDiv.textContent = '❌ NIS tidak ditemukan! Pastikan NIS sudah terdaftar di sistem.';
+        errorDiv.classList.add('show');
+      }
+    }
+    
+    // Logout
+    function logout() {
+      currentUser = null;
+      userRole = null;
+      
+      // Hide main app
+      document.getElementById('main-app').classList.add('hidden');
+      document.getElementById('login-screen').classList.remove('hidden');
+      
+      // Reset forms
+      document.getElementById('admin-login-form').reset();
+      document.getElementById('siswa-login-form').reset();
+      document.getElementById('admin-error').classList.remove('show');
+      document.getElementById('siswa-error').classList.remove('show');
+      
+      // Reset student selector
+      document.getElementById('student-select').disabled = false;
+      
+      // Switch to admin login tab
+      document.querySelectorAll('.login-tab').forEach((btn, idx) => {
+        if (idx === 0) btn.classList.add('active');
+        else btn.classList.remove('active');
+      });
+      document.getElementById('admin-login-form').classList.add('active');
+      document.getElementById('siswa-login-form').classList.remove('active');
+    }
+    
+    window.switchLoginTab = switchLoginTab;
+    window.loginAdmin = loginAdmin;
+    window.loginSiswa = loginSiswa;
+    window.logout = logout;
+
+    const dataHandler = {
+      onDataChanged(data) {
+        allRecords = data;
+        renderRecords();
+        updateLimitWarning();
+        updateStudentSelector();
+        updateInputStudentSelector();
+        if (currentTab === 'dashboard') {
+          updateDashboard();
+        }
+        if (currentTab === 'input' && currentInputStudent) {
+          // Update current input student reference
+          const updatedStudent = data.find(r => r.__backendId === currentInputStudent.__backendId);
+          if (updatedStudent) {
+            currentInputStudent = updatedStudent;
+            updateProgressDisplay();
+          }
+        }
+      }
+    };
+
+    async function initApp() {
+      if (window.dataSdk) {
+        const initResult = await window.dataSdk.init(dataHandler);
+        if (!initResult.isOk) {
+          console.error("Failed to initialize data SDK");
+        }
+      }
+
+      if (window.elementSdk) {
+        await window.elementSdk.init({
+          defaultConfig,
+          onConfigChange: async (config) => {
+            document.getElementById('school-name').textContent = config.school_name || defaultConfig.school_name;
+            document.getElementById('school-address').textContent = config.school_address || defaultConfig.school_address;
+            document.getElementById('academic-year').textContent = 'Tahun Ajaran ' + (config.academic_year || defaultConfig.academic_year);
+            document.getElementById('page-title').textContent = config.page_title || defaultConfig.page_title;
+            
+            const bgColor = config.background_color || defaultConfig.background_color;
+            const headerColor = config.header_color || defaultConfig.header_color;
+            const btnColor = config.primary_button_color || defaultConfig.primary_button_color;
+            const accentColor = config.accent_color || defaultConfig.accent_color;
+            
+            document.body.style.background = `linear-gradient(135deg, ${bgColor} 0%, ${accentColor} 100%)`;
+            document.querySelector('.header').style.background = `linear-gradient(135deg, ${headerColor} 0%, #f4e5a1 100%)`;
+            
+            const btnPrimary = document.querySelectorAll('.btn-primary');
+            btnPrimary.forEach(btn => {
+              btn.style.background = `linear-gradient(135deg, ${btnColor} 0%, #f4e5a1 100%)`;
+            });
+          },
+          mapToCapabilities: (config) => ({
+            recolorables: [
+              {
+                get: () => config.background_color || defaultConfig.background_color,
+                set: (value) => {
+                  if (window.elementSdk) {
+                    window.elementSdk.config.background_color = value;
+                    window.elementSdk.setConfig({ background_color: value });
+                  }
+                }
+              },
+              {
+                get: () => config.header_color || defaultConfig.header_color,
+                set: (value) => {
+                  if (window.elementSdk) {
+                    window.elementSdk.config.header_color = value;
+                    window.elementSdk.setConfig({ header_color: value });
+                  }
+                }
+              },
+              {
+                get: () => config.text_color || defaultConfig.text_color,
+                set: (value) => {
+                  if (window.elementSdk) {
+                    window.elementSdk.config.text_color = value;
+                    window.elementSdk.setConfig({ text_color: value });
+                  }
+                }
+              },
+              {
+                get: () => config.primary_button_color || defaultConfig.primary_button_color,
+                set: (value) => {
+                  if (window.elementSdk) {
+                    window.elementSdk.config.primary_button_color = value;
+                    window.elementSdk.setConfig({ primary_button_color: value });
+                  }
+                }
+              },
+              {
+                get: () => config.accent_color || defaultConfig.accent_color,
+                set: (value) => {
+                  if (window.elementSdk) {
+                    window.elementSdk.config.accent_color = value;
+                    window.elementSdk.setConfig({ accent_color: value });
+                  }
+                }
+              }
+            ],
+            borderables: [],
+            fontEditable: undefined,
+            fontSizeable: undefined
+          }),
+          mapToEditPanelValues: (config) => new Map([
+            ["school_name", config.school_name || defaultConfig.school_name],
+            ["school_address", config.school_address || defaultConfig.school_address],
+            ["academic_year", config.academic_year || defaultConfig.academic_year],
+            ["page_title", config.page_title || defaultConfig.page_title]
+          ])
+        });
+      }
+    }
+
+    function updateLimitWarning() {
+      const warning = document.getElementById('limit-warning');
+      const submitBtn = document.getElementById('submit-btn');
+      if (allRecords.length >= 999) {
+        warning.style.display = 'block';
+        submitBtn.disabled = true;
+      } else {
+        warning.style.display = 'none';
+        submitBtn.disabled = false;
+      }
+    }
+
+    function renderRecords() {
+      const container = document.getElementById('records-container');
+      
+      if (allRecords.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <h4>Belum Ada Data Rapot</h4>
+            <p>Silakan tambahkan data siswa menggunakan form di atas</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = allRecords.map(record => {
+        const subjects = [
+          { name: 'Pendidikan Agama Islam', key: 'pai' },
+          { name: 'Pendidikan Kewarganegaraan', key: 'pkn' },
+          { name: 'Bahasa Indonesia', key: 'bind' },
+          { name: 'Bahasa Inggris', key: 'bing' },
+          { name: 'Matematika', key: 'mtk' },
+          { name: 'Ilmu Pengetahuan Alam', key: 'ipa' },
+          { name: 'Ilmu Pengetahuan Sosial', key: 'ips' },
+          { name: 'Seni Budaya & Prakarya', key: 'senbud' },
+          { name: 'Pendidikan Jasmani & Kesehatan', key: 'pjok' },
+          { name: 'Informatika', key: 'informatika' },
+          { name: 'Bahasa Sunda', key: 'bsunda' }
+        ];
+
+        const semesterAverages = [1, 2, 3, 4, 5].map(sem => {
+          const total = subjects.reduce((sum, subj) => {
+            return sum + (record[`semester_${sem}_${subj.key}`] || 0);
+          }, 0);
+          return (total / subjects.length).toFixed(2);
+        });
+
+        const overallAvg = (semesterAverages.reduce((sum, avg) => sum + parseFloat(avg), 0) / 5).toFixed(2);
+
+        return `
+          <div class="record-card">
+            <div class="record-header">
+              <div class="record-info">
+                <h4>${record.nama_siswa}</h4>
+                <p>NIS: ${record.nis}</p>
+              </div>
+              <div>
+                <button class="btn btn-print" onclick="printReportPDF('${record.__backendId}')">
+                  🖨️ Cetak PDF
+                </button>
+                <button class="btn" style="background: #17a2b8; color: white; padding: 8px 16px; font-size: 14px; margin-left: 8px;" onclick="editRecord('${record.__backendId}')">
+                  ✏️ Edit
+                </button>
+                <button class="btn btn-delete" onclick="deleteRecord('${record.__backendId}')">
+                  🗑️ Hapus
+                </button>
+              </div>
+            </div>
+            <div class="grades-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Mata Pelajaran</th>
+                    <th>Sem 1</th>
+                    <th>Sem 2</th>
+                    <th>Sem 3</th>
+                    <th>Sem 4</th>
+                    <th>Sem 5</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${subjects.map(subj => `
+                    <tr>
+                      <td>${subj.name}</td>
+                      <td>${record[`semester_1_${subj.key}`]}</td>
+                      <td>${record[`semester_2_${subj.key}`]}</td>
+                      <td>${record[`semester_3_${subj.key}`]}</td>
+                      <td>${record[`semester_4_${subj.key}`]}</td>
+                      <td>${record[`semester_5_${subj.key}`]}</td>
+                    </tr>
+                  `).join('')}
+                  <tr class="avg-row">
+                    <td>RATA-RATA</td>
+                    <td>${semesterAverages[0]}</td>
+                    <td>${semesterAverages[1]}</td>
+                    <td>${semesterAverages[2]}</td>
+                    <td>${semesterAverages[3]}</td>
+                    <td>${semesterAverages[4]}</td>
+                  </tr>
+                  <tr class="avg-row">
+                    <td>RATA-RATA KESELURUHAN</td>
+                    <td colspan="5">${overallAvg}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function deleteRecord(backendId) {
+      if (isLoading) return;
+      
+      const record = allRecords.find(r => r.__backendId === backendId);
+      if (!record) return;
+
+      const confirmDelete = confirm(`Apakah Anda yakin ingin menghapus data ${record.nama_siswa}?`);
+      if (!confirmDelete) return;
+
+      isLoading = true;
+      document.getElementById('records-container').classList.add('loading');
+
+      if (window.dataSdk) {
+        const result = await window.dataSdk.delete(record);
+        if (!result.isOk) {
+          alert('Gagal menghapus data. Silakan coba lagi.');
+        }
+      }
+
+      isLoading = false;
+      document.getElementById('records-container').classList.remove('loading');
+    }
+
+    document.getElementById('student-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (isLoading || allRecords.length >= 999) return;
+
+      isLoading = true;
+      const submitBtn = document.getElementById('submit-btn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = '⏳ Menyimpan...';
+
+      // Helper function to get value or default to 0
+      const getValue = (id) => {
+        const val = document.getElementById(id).value;
+        return val === '' ? 0 : parseInt(val);
+      };
+
+      const formData = {
+        id: Date.now().toString(),
+        nama_siswa: document.getElementById('nama-siswa').value,
+        nis: document.getElementById('nis').value,
+        semester_1_pai: getValue('s1-pai'),
+        semester_1_pkn: getValue('s1-pkn'),
+        semester_1_bind: getValue('s1-bind'),
+        semester_1_bing: getValue('s1-bing'),
+        semester_1_mtk: getValue('s1-mtk'),
+        semester_1_ipa: getValue('s1-ipa'),
+        semester_1_ips: getValue('s1-ips'),
+        semester_1_senbud: getValue('s1-senbud'),
+        semester_1_pjok: getValue('s1-pjok'),
+        semester_1_informatika: getValue('s1-informatika'),
+        semester_1_bsunda: getValue('s1-bsunda'),
+        semester_2_pai: getValue('s2-pai'),
+        semester_2_pkn: getValue('s2-pkn'),
+        semester_2_bind: getValue('s2-bind'),
+        semester_2_bing: getValue('s2-bing'),
+        semester_2_mtk: getValue('s2-mtk'),
+        semester_2_ipa: getValue('s2-ipa'),
+        semester_2_ips: getValue('s2-ips'),
+        semester_2_senbud: getValue('s2-senbud'),
+        semester_2_pjok: getValue('s2-pjok'),
+        semester_2_informatika: getValue('s2-informatika'),
+        semester_2_bsunda: getValue('s2-bsunda'),
+        semester_3_pai: getValue('s3-pai'),
+        semester_3_pkn: getValue('s3-pkn'),
+        semester_3_bind: getValue('s3-bind'),
+        semester_3_bing: getValue('s3-bing'),
+        semester_3_mtk: getValue('s3-mtk'),
+        semester_3_ipa: getValue('s3-ipa'),
+        semester_3_ips: getValue('s3-ips'),
+        semester_3_senbud: getValue('s3-senbud'),
+        semester_3_pjok: getValue('s3-pjok'),
+        semester_3_informatika: getValue('s3-informatika'),
+        semester_3_bsunda: getValue('s3-bsunda'),
+        semester_4_pai: getValue('s4-pai'),
+        semester_4_pkn: getValue('s4-pkn'),
+        semester_4_bind: getValue('s4-bind'),
+        semester_4_bing: getValue('s4-bing'),
+        semester_4_mtk: getValue('s4-mtk'),
+        semester_4_ipa: getValue('s4-ipa'),
+        semester_4_ips: getValue('s4-ips'),
+        semester_4_senbud: getValue('s4-senbud'),
+        semester_4_pjok: getValue('s4-pjok'),
+        semester_4_informatika: getValue('s4-informatika'),
+        semester_4_bsunda: getValue('s4-bsunda'),
+        semester_5_pai: getValue('s5-pai'),
+        semester_5_pkn: getValue('s5-pkn'),
+        semester_5_bind: getValue('s5-bind'),
+        semester_5_bing: getValue('s5-bing'),
+        semester_5_mtk: getValue('s5-mtk'),
+        semester_5_ipa: getValue('s5-ipa'),
+        semester_5_ips: getValue('s5-ips'),
+        semester_5_senbud: getValue('s5-senbud'),
+        semester_5_pjok: getValue('s5-pjok'),
+        semester_5_informatika: getValue('s5-informatika'),
+        semester_5_bsunda: getValue('s5-bsunda'),
+        created_at: new Date().toISOString()
+      };
+
+      if (window.dataSdk) {
+        const result = await window.dataSdk.create(formData);
+        if (result.isOk) {
+          document.getElementById('student-form').reset();
+        } else {
+          alert('Gagal menyimpan data. Silakan coba lagi.');
+        }
+      }
+
+      isLoading = false;
+      submitBtn.disabled = false;
+      submitBtn.textContent = '💾 Simpan Data Siswa';
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      document.getElementById('student-form').reset();
+    });
+
+    let currentEditRecord = null;
+    
+    // Function to edit record
+    function editRecord(backendId) {
+      const record = allRecords.find(r => r.__backendId === backendId);
+      if (!record) return;
+      
+      currentEditRecord = record;
+      
+      // Populate form
+      document.getElementById('edit-nama-siswa').value = record.nama_siswa;
+      document.getElementById('edit-nis').value = record.nis;
+      
+      // Populate all grades
+      const subjects = ['pai', 'pkn', 'bind', 'bing', 'mtk', 'ipa', 'ips', 'senbud', 'pjok', 'informatika', 'bsunda'];
+      for (let sem = 1; sem <= 5; sem++) {
+        subjects.forEach(subj => {
+          const input = document.getElementById(`edit-s${sem}-${subj}`);
+          if (input) {
+            input.value = record[`semester_${sem}_${subj}`] || 0;
+          }
+        });
+      }
+      
+      // Show modal
+      document.getElementById('edit-modal').style.display = 'block';
+      document.body.style.overflow = 'hidden';
+    }
+    
+    // Function to close edit modal
+    function closeEditModal() {
+      document.getElementById('edit-modal').style.display = 'none';
+      document.body.style.overflow = 'auto';
+      currentEditRecord = null;
+    }
+    
+    // Handle edit form submission
+    document.getElementById('edit-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (isLoading || !currentEditRecord) return;
+      
+      isLoading = true;
+      const submitBtn = document.getElementById('edit-submit-btn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = '⏳ Menyimpan...';
+      
+      // Helper function to get value or default to 0
+      const getEditValue = (id) => {
+        const val = document.getElementById(id).value;
+        return val === '' ? 0 : parseInt(val);
+      };
+      
+      const updatedData = {
+        ...currentEditRecord,
+        nama_siswa: document.getElementById('edit-nama-siswa').value,
+        nis: document.getElementById('edit-nis').value,
+        semester_1_pai: getEditValue('edit-s1-pai'),
+        semester_1_pkn: getEditValue('edit-s1-pkn'),
+        semester_1_bind: getEditValue('edit-s1-bind'),
+        semester_1_bing: getEditValue('edit-s1-bing'),
+        semester_1_mtk: getEditValue('edit-s1-mtk'),
+        semester_1_ipa: getEditValue('edit-s1-ipa'),
+        semester_1_ips: getEditValue('edit-s1-ips'),
+        semester_1_senbud: getEditValue('edit-s1-senbud'),
+        semester_1_pjok: getEditValue('edit-s1-pjok'),
+        semester_1_informatika: getEditValue('edit-s1-informatika'),
+        semester_1_bsunda: getEditValue('edit-s1-bsunda'),
+        semester_2_pai: getEditValue('edit-s2-pai'),
+        semester_2_pkn: getEditValue('edit-s2-pkn'),
+        semester_2_bind: getEditValue('edit-s2-bind'),
+        semester_2_bing: getEditValue('edit-s2-bing'),
+        semester_2_mtk: getEditValue('edit-s2-mtk'),
+        semester_2_ipa: getEditValue('edit-s2-ipa'),
+        semester_2_ips: getEditValue('edit-s2-ips'),
+        semester_2_senbud: getEditValue('edit-s2-senbud'),
+        semester_2_pjok: getEditValue('edit-s2-pjok'),
+        semester_2_informatika: getEditValue('edit-s2-informatika'),
+        semester_2_bsunda: getEditValue('edit-s2-bsunda'),
+        semester_3_pai: getEditValue('edit-s3-pai'),
+        semester_3_pkn: getEditValue('edit-s3-pkn'),
+        semester_3_bind: getEditValue('edit-s3-bind'),
+        semester_3_bing: getEditValue('edit-s3-bing'),
+        semester_3_mtk: getEditValue('edit-s3-mtk'),
+        semester_3_ipa: getEditValue('edit-s3-ipa'),
+        semester_3_ips: getEditValue('edit-s3-ips'),
+        semester_3_senbud: getEditValue('edit-s3-senbud'),
+        semester_3_pjok: getEditValue('edit-s3-pjok'),
+        semester_3_informatika: getEditValue('edit-s3-informatika'),
+        semester_3_bsunda: getEditValue('edit-s3-bsunda'),
+        semester_4_pai: getEditValue('edit-s4-pai'),
+        semester_4_pkn: getEditValue('edit-s4-pkn'),
+        semester_4_bind: getEditValue('edit-s4-bind'),
+        semester_4_bing: getEditValue('edit-s4-bing'),
+        semester_4_mtk: getEditValue('edit-s4-mtk'),
+        semester_4_ipa: getEditValue('edit-s4-ipa'),
+        semester_4_ips: getEditValue('edit-s4-ips'),
+        semester_4_senbud: getEditValue('edit-s4-senbud'),
+        semester_4_pjok: getEditValue('edit-s4-pjok'),
+        semester_4_informatika: getEditValue('edit-s4-informatika'),
+        semester_4_bsunda: getEditValue('edit-s4-bsunda'),
+        semester_5_pai: getEditValue('edit-s5-pai'),
+        semester_5_pkn: getEditValue('edit-s5-pkn'),
+        semester_5_bind: getEditValue('edit-s5-bind'),
+        semester_5_bing: getEditValue('edit-s5-bing'),
+        semester_5_mtk: getEditValue('edit-s5-mtk'),
+        semester_5_ipa: getEditValue('edit-s5-ipa'),
+        semester_5_ips: getEditValue('edit-s5-ips'),
+        semester_5_senbud: getEditValue('edit-s5-senbud'),
+        semester_5_pjok: getEditValue('edit-s5-pjok'),
+        semester_5_informatika: getEditValue('edit-s5-informatika'),
+        semester_5_bsunda: getEditValue('edit-s5-bsunda')
+      };
+      
+      if (window.dataSdk) {
+        const result = await window.dataSdk.update(updatedData);
+        if (result.isOk) {
+          closeEditModal();
+          
+          // Show success message using custom notification
+          const notification = document.createElement('div');
+          notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #4CAF50; color: white; padding: 16px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; font-weight: 600;';
+          notification.textContent = '✅ Data siswa berhasil diperbarui!';
+          document.body.appendChild(notification);
+          setTimeout(() => notification.remove(), 3000);
+        } else {
+          // Show error message
+          const notification = document.createElement('div');
+          notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #dc3545; color: white; padding: 16px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; font-weight: 600;';
+          notification.textContent = '�� Gagal memperbarui data. Silakan coba lagi.';
+          document.body.appendChild(notification);
+          setTimeout(() => notification.remove(), 3000);
+        }
+      }
+      
+      isLoading = false;
+      submitBtn.disabled = false;
+      submitBtn.textContent = '💾 Simpan Perubahan';
+    });
+    
+    window.editRecord = editRecord;
+    window.closeEditModal = closeEditModal;
+    window.deleteRecord = deleteRecord;
+
+    // Function to print report as PDF
+    function printReportPDF(backendId) {
+      const record = allRecords.find(r => r.__backendId === backendId);
+      if (!record) return;
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      // Get config values
+      const config = window.elementSdk?.config || defaultConfig;
+      const schoolName = config.school_name || defaultConfig.school_name;
+      const schoolAddress = config.school_address || defaultConfig.school_address;
+      const academicYear = config.academic_year || defaultConfig.academic_year;
+
+      // Header
+      doc.setFontSize(18);
+      doc.setFont(undefined, 'bold');
+      doc.text(schoolName, 105, 20, { align: 'center' });
+      
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      doc.text(schoolAddress, 105, 27, { align: 'center' });
+      doc.text('Tahun Ajaran ' + academicYear, 105, 33, { align: 'center' });
+
+      // Line separator
+      doc.setLineWidth(0.5);
+      doc.line(15, 37, 195, 37);
+
+      // Title
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'bold');
+      doc.text('REKAP NILAI RAPOT', 105, 45, { align: 'center' });
+
+      // Student info
+      doc.setFontSize(11);
+      doc.setFont(undefined, 'normal');
+      doc.text('Nama Siswa: ' + record.nama_siswa, 15, 55);
+      doc.text('NIS: ' + record.nis, 15, 62);
+
+      // Prepare table data
+      const subjects = [
+        { name: 'Pendidikan Agama Islam', key: 'pai' },
+        { name: 'Pendidikan Kewarganegaraan', key: 'pkn' },
+        { name: 'Bahasa Indonesia', key: 'bind' },
+        { name: 'Bahasa Inggris', key: 'bing' },
+        { name: 'Matematika', key: 'mtk' },
+        { name: 'Ilmu Pengetahuan Alam', key: 'ipa' },
+        { name: 'Ilmu Pengetahuan Sosial', key: 'ips' },
+        { name: 'Seni Budaya & Prakarya', key: 'senbud' },
+        { name: 'Pendidikan Jasmani & Kesehatan', key: 'pjok' },
+        { name: 'Informatika', key: 'informatika' },
+        { name: 'Bahasa Sunda', key: 'bsunda' }
+      ];
+
+      const tableData = subjects.map(subj => [
+        subj.name,
+        record[`semester_1_${subj.key}`] || 0,
+        record[`semester_2_${subj.key}`] || 0,
+        record[`semester_3_${subj.key}`] || 0,
+        record[`semester_4_${subj.key}`] || 0,
+        record[`semester_5_${subj.key}`] || 0
+      ]);
+
+      // Calculate averages
+      const semesterAverages = [1, 2, 3, 4, 5].map(sem => {
+        const total = subjects.reduce((sum, subj) => {
+          return sum + (record[`semester_${sem}_${subj.key}`] || 0);
+        }, 0);
+        return (total / subjects.length).toFixed(2);
+      });
+
+      const overallAvg = (semesterAverages.reduce((sum, avg) => sum + parseFloat(avg), 0) / 5).toFixed(2);
+
+      // Add average row
+      tableData.push([
+        'RATA-RATA',
+        semesterAverages[0],
+        semesterAverages[1],
+        semesterAverages[2],
+        semesterAverages[3],
+        semesterAverages[4]
+      ]);
+
+      // Generate table
+      doc.autoTable({
+        startY: 70,
+        head: [['Mata Pelajaran', 'Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [30, 60, 114],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          halign: 'center'
+        },
+        bodyStyles: {
+          halign: 'center'
+        },
+        columnStyles: {
+          0: { halign: 'left', cellWidth: 70 }
+        },
+        didParseCell: function(data) {
+          if (data.row.index === tableData.length - 1) {
+            data.cell.styles.fillColor = [212, 175, 55];
+            data.cell.styles.textColor = [30, 60, 114];
+            data.cell.styles.fontStyle = 'bold';
+          }
+        }
+      });
+
+      // Overall average box
+      const finalY = doc.lastAutoTable.finalY + 10;
+      doc.setFillColor(212, 175, 55);
+      doc.rect(15, finalY, 180, 15, 'F');
+      doc.setTextColor(30, 60, 114);
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text('RATA-RATA KESELURUHAN: ' + overallAvg, 105, finalY + 10, { align: 'center' });
+
+      // Footer
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'normal');
+      const currentDate = new Date().toLocaleDateString('id-ID', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+      doc.text('Dicetak pada: ' + currentDate, 15, 280);
+
+      // Save PDF
+      doc.save(`Rapot_${record.nama_siswa.replace(/\s+/g, '_')}_${record.nis}.pdf`);
+    }
+
+    // Function to print dashboard as PDF
+    function printDashboardPDF() {
+      const selectValue = document.getElementById('student-select').value;
+      if (!selectValue) return;
+
+      const record = allRecords.find(r => r.__backendId === selectValue);
+      if (!record) return;
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      // Get config values
+      const config = window.elementSdk?.config || defaultConfig;
+      const schoolName = config.school_name || defaultConfig.school_name;
+      const schoolAddress = config.school_address || defaultConfig.school_address;
+      const academicYear = config.academic_year || defaultConfig.academic_year;
+
+      // Header
+      doc.setFontSize(18);
+      doc.setFont(undefined, 'bold');
+      doc.text(schoolName, 105, 20, { align: 'center' });
+      
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      doc.text(schoolAddress, 105, 27, { align: 'center' });
+      doc.text('Tahun Ajaran ' + academicYear, 105, 33, { align: 'center' });
+
+      // Line separator
+      doc.setLineWidth(0.5);
+      doc.line(15, 37, 195, 37);
+
+      // Title
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'bold');
+      doc.text('REKAP NILAI RAPOT', 105, 45, { align: 'center' });
+
+      // Student info
+      doc.setFontSize(11);
+      doc.setFont(undefined, 'normal');
+      doc.text('Nama Siswa: ' + record.nama_siswa, 15, 55);
+      doc.text('NIS: ' + record.nis, 15, 62);
+
+      // Prepare table data
+      const subjects = [
+        { name: 'Pendidikan Agama Islam', key: 'pai' },
+        { name: 'Pendidikan Kewarganegaraan', key: 'pkn' },
+        { name: 'Bahasa Indonesia', key: 'bind' },
+        { name: 'Bahasa Inggris', key: 'bing' },
+        { name: 'Matematika', key: 'mtk' },
+        { name: 'Ilmu Pengetahuan Alam', key: 'ipa' },
+        { name: 'Ilmu Pengetahuan Sosial', key: 'ips' },
+        { name: 'Seni Budaya & Prakarya', key: 'senbud' },
+        { name: 'Pendidikan Jasmani & Kesehatan', key: 'pjok' },
+        { name: 'Informatika', key: 'informatika' },
+        { name: 'Bahasa Sunda', key: 'bsunda' }
+      ];
+
+      const tableData = subjects.map(subj => {
+        const values = [1, 2, 3, 4, 5].map(sem => record[`semester_${sem}_${subj.key}`] || 0);
+        const avg = (values.reduce((sum, val) => sum + val, 0) / 5).toFixed(2);
+        return [subj.name, ...values, avg];
+      });
+
+      // Calculate averages
+      const semesterAverages = [1, 2, 3, 4, 5].map(sem => {
+        const total = subjects.reduce((sum, subj) => {
+          return sum + (record[`semester_${sem}_${subj.key}`] || 0);
+        }, 0);
+        return (total / subjects.length).toFixed(2);
+      });
+
+      const overallAvg = (semesterAverages.reduce((sum, avg) => sum + parseFloat(avg), 0) / 5).toFixed(2);
+
+      // Add average row
+      tableData.push([
+        'RATA-RATA',
+        ...semesterAverages,
+        overallAvg
+      ]);
+
+      // Generate table
+      doc.autoTable({
+        startY: 70,
+        head: [['Mata Pelajaran', 'Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Rata-rata']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [30, 60, 114],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          halign: 'center',
+          fontSize: 9
+        },
+        bodyStyles: {
+          halign: 'center',
+          fontSize: 9
+        },
+        columnStyles: {
+          0: { halign: 'left', cellWidth: 60 },
+          6: { fillColor: [212, 175, 55], textColor: [30, 60, 114], fontStyle: 'bold' }
+        },
+        didParseCell: function(data) {
+          if (data.row.index === tableData.length - 1) {
+            data.cell.styles.fillColor = [212, 175, 55];
+            data.cell.styles.textColor = [30, 60, 114];
+            data.cell.styles.fontStyle = 'bold';
+          }
+        }
+      });
+
+      // Overall average box
+      const finalY = doc.lastAutoTable.finalY + 10;
+      doc.setFillColor(212, 175, 55);
+      doc.rect(15, finalY, 180, 15, 'F');
+      doc.setTextColor(30, 60, 114);
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text('RATA-RATA KESELURUHAN (5 SEMESTER): ' + overallAvg, 105, finalY + 10, { align: 'center' });
+
+      // Footer
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'normal');
+      const currentDate = new Date().toLocaleDateString('id-ID', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+      doc.text('Dicetak pada: ' + currentDate, 15, 280);
+
+      // Save PDF
+      doc.save(`Rapot_${record.nama_siswa.replace(/\s+/g, '_')}_${record.nis}.pdf`);
+    }
+
+    window.printReportPDF = printReportPDF;
+    window.printDashboardPDF = printDashboardPDF;
+
+    // Function to download template Excel
+    function downloadTemplate() {
+      const wb = XLSX.utils.book_new();
+      
+      const templateData = [
+        ['Nama Siswa', 'NIS', 
+         'S1-PAI', 'S1-PKN', 'S1-BIND', 'S1-BING', 'S1-MTK', 'S1-IPA', 'S1-IPS', 'S1-SENBUD', 'S1-PJOK', 'S1-INFORMATIKA', 'S1-BSUNDA',
+         'S2-PAI', 'S2-PKN', 'S2-BIND', 'S2-BING', 'S2-MTK', 'S2-IPA', 'S2-IPS', 'S2-SENBUD', 'S2-PJOK', 'S2-INFORMATIKA', 'S2-BSUNDA',
+         'S3-PAI', 'S3-PKN', 'S3-BIND', 'S3-BING', 'S3-MTK', 'S3-IPA', 'S3-IPS', 'S3-SENBUD', 'S3-PJOK', 'S3-INFORMATIKA', 'S3-BSUNDA',
+         'S4-PAI', 'S4-PKN', 'S4-BIND', 'S4-BING', 'S4-MTK', 'S4-IPA', 'S4-IPS', 'S4-SENBUD', 'S4-PJOK', 'S4-INFORMATIKA', 'S4-BSUNDA',
+         'S5-PAI', 'S5-PKN', 'S5-BIND', 'S5-BING', 'S5-MTK', 'S5-IPA', 'S5-IPS', 'S5-SENBUD', 'S5-PJOK', 'S5-INFORMATIKA', 'S5-BSUNDA'],
+        ['Ahmad Reza', '12345', 
+         85, 88, 90, 85, 82, 87, 89, 92, 88, 86, 90,
+         86, 89, 91, 86, 83, 88, 90, 93, 89, 87, 91,
+         87, 90, 92, 87, 84, 89, 91, 94, 90, 88, 92,
+         88, 91, 93, 88, 85, 90, 92, 95, 91, 89, 93,
+         89, 92, 94, 89, 86, 91, 93, 96, 92, 90, 94]
+      ];
+      
+      const ws = XLSX.utils.aoa_to_sheet(templateData);
+      XLSX.utils.book_append_sheet(wb, ws, 'Data Siswa');
+      XLSX.writeFile(wb, 'Template_Data_Siswa.xlsx');
+    }
+
+    // Function to handle file import
+    document.getElementById('file-import').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const statusDiv = document.getElementById('import-status');
+      statusDiv.innerHTML = '<span style="color: #2196F3;">⏳ Memproses file...</span>';
+
+      try {
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data);
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        if (jsonData.length === 0) {
+          statusDiv.innerHTML = '<span style="color: #dc3545;">❌ File kosong atau format tidak sesuai</span>';
+          return;
+        }
+
+        let successCount = 0;
+        let errorCount = 0;
+        const errors = [];
+
+        for (let i = 0; i < jsonData.length; i++) {
+          const row = jsonData[i];
+          
+          // Check if adding this record would exceed limit
+          if (allRecords.length + successCount >= 999) {
+            errors.push(`Baris ${i + 2}: Batas maksimum 999 data tercapai`);
+            errorCount++;
+            continue;
+          }
+
+          // Validate required fields
+          if (!row['Nama Siswa'] || !row['NIS']) {
+            errors.push(`Baris ${i + 2}: Nama Siswa dan NIS harus diisi`);
+            errorCount++;
+            continue;
+          }
+
+          // Create record
+          const formData = {
+            id: Date.now().toString() + '_' + i,
+            nama_siswa: String(row['Nama Siswa'] || ''),
+            nis: String(row['NIS'] || ''),
+            semester_1_pai: parseInt(row['S1-PAI']) || 0,
+            semester_1_pkn: parseInt(row['S1-PKN']) || 0,
+            semester_1_bind: parseInt(row['S1-BIND']) || 0,
+            semester_1_bing: parseInt(row['S1-BING']) || 0,
+            semester_1_mtk: parseInt(row['S1-MTK']) || 0,
+            semester_1_ipa: parseInt(row['S1-IPA']) || 0,
+            semester_1_ips: parseInt(row['S1-IPS']) || 0,
+            semester_1_senbud: parseInt(row['S1-SENBUD']) || 0,
+            semester_1_pjok: parseInt(row['S1-PJOK']) || 0,
+            semester_1_informatika: parseInt(row['S1-INFORMATIKA']) || 0,
+            semester_1_bsunda: parseInt(row['S1-BSUNDA']) || 0,
+            semester_2_pai: parseInt(row['S2-PAI']) || 0,
+            semester_2_pkn: parseInt(row['S2-PKN']) || 0,
+            semester_2_bind: parseInt(row['S2-BIND']) || 0,
+            semester_2_bing: parseInt(row['S2-BING']) || 0,
+            semester_2_mtk: parseInt(row['S2-MTK']) || 0,
+            semester_2_ipa: parseInt(row['S2-IPA']) || 0,
+            semester_2_ips: parseInt(row['S2-IPS']) || 0,
+            semester_2_senbud: parseInt(row['S2-SENBUD']) || 0,
+            semester_2_pjok: parseInt(row['S2-PJOK']) || 0,
+            semester_2_informatika: parseInt(row['S2-INFORMATIKA']) || 0,
+            semester_2_bsunda: parseInt(row['S2-BSUNDA']) || 0,
+            semester_3_pai: parseInt(row['S3-PAI']) || 0,
+            semester_3_pkn: parseInt(row['S3-PKN']) || 0,
+            semester_3_bind: parseInt(row['S3-BIND']) || 0,
+            semester_3_bing: parseInt(row['S3-BING']) || 0,
+            semester_3_mtk: parseInt(row['S3-MTK']) || 0,
+            semester_3_ipa: parseInt(row['S3-IPA']) || 0,
+            semester_3_ips: parseInt(row['S3-IPS']) || 0,
+            semester_3_senbud: parseInt(row['S3-SENBUD']) || 0,
+            semester_3_pjok: parseInt(row['S3-PJOK']) || 0,
+            semester_3_informatika: parseInt(row['S3-INFORMATIKA']) || 0,
+            semester_3_bsunda: parseInt(row['S3-BSUNDA']) || 0,
+            semester_4_pai: parseInt(row['S4-PAI']) || 0,
+            semester_4_pkn: parseInt(row['S4-PKN']) || 0,
+            semester_4_bind: parseInt(row['S4-BIND']) || 0,
+            semester_4_bing: parseInt(row['S4-BING']) || 0,
+            semester_4_mtk: parseInt(row['S4-MTK']) || 0,
+            semester_4_ipa: parseInt(row['S4-IPA']) || 0,
+            semester_4_ips: parseInt(row['S4-IPS']) || 0,
+            semester_4_senbud: parseInt(row['S4-SENBUD']) || 0,
+            semester_4_pjok: parseInt(row['S4-PJOK']) || 0,
+            semester_4_informatika: parseInt(row['S4-INFORMATIKA']) || 0,
+            semester_4_bsunda: parseInt(row['S4-BSUNDA']) || 0,
+            semester_5_pai: parseInt(row['S5-PAI']) || 0,
+            semester_5_pkn: parseInt(row['S5-PKN']) || 0,
+            semester_5_bind: parseInt(row['S5-BIND']) || 0,
+            semester_5_bing: parseInt(row['S5-BING']) || 0,
+            semester_5_mtk: parseInt(row['S5-MTK']) || 0,
+            semester_5_ipa: parseInt(row['S5-IPA']) || 0,
+            semester_5_ips: parseInt(row['S5-IPS']) || 0,
+            semester_5_senbud: parseInt(row['S5-SENBUD']) || 0,
+            semester_5_pjok: parseInt(row['S5-PJOK']) || 0,
+            semester_5_informatika: parseInt(row['S5-INFORMATIKA']) || 0,
+            semester_5_bsunda: parseInt(row['S5-BSUNDA']) || 0,
+            created_at: new Date().toISOString()
+          };
+
+          if (window.dataSdk) {
+            const result = await window.dataSdk.create(formData);
+            if (result.isOk) {
+              successCount++;
+            } else {
+              errors.push(`Baris ${i + 2}: Gagal menyimpan data`);
+              errorCount++;
+            }
+          }
+
+          // Small delay to prevent overwhelming the system
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
+        let statusMessage = `<span style="color: #4CAF50;">✅ Berhasil mengimport ${successCount} data siswa</span>`;
+        if (errorCount > 0) {
+          statusMessage += `<br><span style="color: #ff9800;">⚠️ ${errorCount} data gagal diimport</span>`;
+          if (errors.length > 0) {
+            statusMessage += `<br><details style="margin-top: 8px;"><summary style="cursor: pointer; color: #666;">Lihat detail error</summary><div style="margin-top: 8px; font-size: 12px; color: #666;">${errors.slice(0, 10).join('<br>')}</div></details>`;
+          }
+        }
+        statusDiv.innerHTML = statusMessage;
+
+      } catch (error) {
+        statusDiv.innerHTML = `<span style="color: #dc3545;">❌ Error: ${error.message}</span>`;
+      }
+
+      // Reset file input
+      e.target.value = '';
+    });
+
+    window.downloadTemplate = downloadTemplate;
+
+    // Load student data for input
+    function loadStudentData() {
+      const selectValue = document.getElementById('student-select-input').value;
+      const newStudentSection = document.getElementById('new-student-section');
+      const inputFormSection = document.getElementById('input-form-section');
+      
+      if (selectValue === '__NEW__') {
+        isNewStudent = true;
+        currentInputStudent = null;
+        newStudentSection.style.display = 'block';
+        inputFormSection.style.display = 'block';
+        document.getElementById('current-student-info').textContent = 'Siswa Baru - Masukkan data siswa dan nilai';
+        document.getElementById('subject-select').value = '';
+        document.getElementById('semester-inputs-container').style.display = 'none';
+        updateProgressDisplay();
+      } else if (selectValue) {
+        isNewStudent = false;
+        currentInputStudent = allRecords.find(r => r.__backendId === selectValue);
+        newStudentSection.style.display = 'none';
+        inputFormSection.style.display = 'block';
+        if (currentInputStudent) {
+          document.getElementById('current-student-info').textContent = `${currentInputStudent.nama_siswa} (${currentInputStudent.nis})`;
+          updateProgressDisplay();
+        }
+        document.getElementById('subject-select').value = '';
+        document.getElementById('semester-inputs-container').style.display = 'none';
+      } else {
+        isNewStudent = false;
+        currentInputStudent = null;
+        newStudentSection.style.display = 'none';
+        inputFormSection.style.display = 'none';
+      }
+    }
+    
+    // Update semester inputs based on selected subject
+    function updateSemesterInputs() {
+      const subject = document.getElementById('subject-select').value;
+      const container = document.getElementById('semester-inputs-container');
+      
+      if (!subject) {
+        container.style.display = 'none';
+        return;
+      }
+      
+      container.style.display = 'block';
+      
+      // Load existing values if editing existing student
+      if (currentInputStudent && !isNewStudent) {
+        for (let sem = 1; sem <= 5; sem++) {
+          const input = document.getElementById(`input-sem${sem}`);
+          const value = currentInputStudent[`semester_${sem}_${subject}`];
+          input.value = value || '';
+        }
+      } else {
+        clearInputs();
+      }
+    }
+    
+    // Clear input fields
+    function clearInputs() {
+      for (let sem = 1; sem <= 5; sem++) {
+        document.getElementById(`input-sem${sem}`).value = '';
+      }
+    }
+    
+    // Save grades
+    async function saveGrades() {
+      if (isLoading) return;
+      
+      const subject = document.getElementById('subject-select').value;
+      if (!subject) {
+        alert('Silakan pilih mata pelajaran terlebih dahulu');
+        return;
+      }
+      
+      const grades = {};
+      
+      for (let sem = 1; sem <= 5; sem++) {
+        const input = document.getElementById(`input-sem${sem}`);
+        const value = input.value;
+        grades[`semester_${sem}_${subject}`] = value === '' ? 0 : parseInt(value);
+      }
+      
+      isLoading = true;
+      const saveBtn = document.getElementById('save-grades-btn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = '⏳ Menyimpan...';
+      
+      if (window.dataSdk) {
+        if (isNewStudent) {
+          // Create new student with grades
+          const namaSiswa = document.getElementById('new-nama-siswa').value.trim();
+          const nis = document.getElementById('new-nis').value.trim();
+          
+          if (!namaSiswa || !nis) {
+            alert('Silakan isi nama siswa dan NIS terlebih dahulu');
+            isLoading = false;
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾 Simpan Nilai';
+            return;
+          }
+          
+          if (allRecords.length >= 999) {
+            alert('Batas maksimum 999 data siswa telah tercapai');
+            isLoading = false;
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾 Simpan Nilai';
+            return;
+          }
+          
+          const newRecord = {
+            id: Date.now().toString(),
+            nama_siswa: namaSiswa,
+            nis: nis,
+            semester_1_pai: 0,
+            semester_1_pkn: 0,
+            semester_1_bind: 0,
+            semester_1_bing: 0,
+            semester_1_mtk: 0,
+            semester_1_ipa: 0,
+            semester_1_ips: 0,
+            semester_1_senbud: 0,
+            semester_1_pjok: 0,
+            semester_1_informatika: 0,
+            semester_1_bsunda: 0,
+            semester_2_pai: 0,
+            semester_2_pkn: 0,
+            semester_2_bind: 0,
+            semester_2_bing: 0,
+            semester_2_mtk: 0,
+            semester_2_ipa: 0,
+            semester_2_ips: 0,
+            semester_2_senbud: 0,
+            semester_2_pjok: 0,
+            semester_2_informatika: 0,
+            semester_2_bsunda: 0,
+            semester_3_pai: 0,
+            semester_3_pkn: 0,
+            semester_3_bind: 0,
+            semester_3_bing: 0,
+            semester_3_mtk: 0,
+            semester_3_ipa: 0,
+            semester_3_ips: 0,
+            semester_3_senbud: 0,
+            semester_3_pjok: 0,
+            semester_3_informatika: 0,
+            semester_3_bsunda: 0,
+            semester_4_pai: 0,
+            semester_4_pkn: 0,
+            semester_4_bind: 0,
+            semester_4_bing: 0,
+            semester_4_mtk: 0,
+            semester_4_ipa: 0,
+            semester_4_ips: 0,
+            semester_4_senbud: 0,
+            semester_4_pjok: 0,
+            semester_4_informatika: 0,
+            semester_4_bsunda: 0,
+            semester_5_pai: 0,
+            semester_5_pkn: 0,
+            semester_5_bind: 0,
+            semester_5_bing: 0,
+            semester_5_mtk: 0,
+            semester_5_ipa: 0,
+            semester_5_ips: 0,
+            semester_5_senbud: 0,
+            semester_5_pjok: 0,
+            semester_5_informatika: 0,
+            semester_5_bsunda: 0,
+            created_at: new Date().toISOString(),
+            ...grades
+          };
+          
+          const result = await window.dataSdk.create(newRecord);
+          if (result.isOk) {
+            document.getElementById('new-nama-siswa').value = '';
+            document.getElementById('new-nis').value = '';
+            isNewStudent = false;
+            
+            // Wait for onDataChanged to update allRecords
+            setTimeout(() => {
+              const createdStudent = allRecords.find(r => r.nis === nis);
+              if (createdStudent) {
+                currentInputStudent = createdStudent;
+                document.getElementById('student-select-input').value = createdStudent.__backendId;
+                document.getElementById('new-student-section').style.display = 'none';
+                document.getElementById('current-student-info').textContent = `${createdStudent.nama_siswa} (${createdStudent.nis})`;
+                updateInputStudentSelector();
+                updateProgressDisplay();
+              }
+            }, 500);
+            
+            clearInputs();
+            
+            // Get subject name
+            const subjectNames = {
+              'pai': 'Pendidikan Agama Islam',
+              'pkn': 'Pendidikan Kewarganegaraan',
+              'bind': 'Bahasa Indonesia',
+              'bing': 'Bahasa Inggris',
+              'mtk': 'Matematika',
+              'ipa': 'Ilmu Pengetahuan Alam',
+              'ips': 'Ilmu Pengetahuan Sosial',
+              'senbud': 'Seni Budaya & Prakarya',
+              'pjok': 'Pendidikan Jasmani & Kesehatan',
+              'informatika': 'Informatika',
+              'bsunda': 'Bahasa Sunda'
+            };
+            
+            alert(`✅ Data siswa dan nilai ${subjectNames[subject]} berhasil disimpan!`);
+          } else {
+            alert('❌ Gagal menyimpan data. Silakan coba lagi.');
+          }
+        } else if (currentInputStudent) {
+          // Update existing student
+          const updatedRecord = { ...currentInputStudent, ...grades };
+          const result = await window.dataSdk.update(updatedRecord);
+          if (result.isOk) {
+            clearInputs();
+            
+            // Get subject name
+            const subjectNames = {
+              'pai': 'Pendidikan Agama Islam',
+              'pkn': 'Pendidikan Kewarganegaraan',
+              'bind': 'Bahasa Indonesia',
+              'bing': 'Bahasa Inggris',
+              'mtk': 'Matematika',
+              'ipa': 'Ilmu Pengetahuan Alam',
+              'ips': 'Ilmu Pengetahuan Sosial',
+              'senbud': 'Seni Budaya & Prakarya',
+              'pjok': 'Pendidikan Jasmani & Kesehatan',
+              'informatika': 'Informatika',
+              'bsunda': 'Bahasa Sunda'
+            };
+            
+            alert(`✅ Nilai ${subjectNames[subject]} berhasil disimpan!`);
+          } else {
+            alert('❌ Gagal menyimpan nilai. Silakan coba lagi.');
+          }
+        }
+      }
+      
+      isLoading = false;
+      saveBtn.disabled = false;
+      saveBtn.textContent = '💾 Simpan Nilai';
+    }
+    
+    // Update progress display
+    function updateProgressDisplay() {
+      const progressGrid = document.getElementById('progress-grid');
+      
+      if (!currentInputStudent && !isNewStudent) {
+        progressGrid.innerHTML = '';
+        return;
+      }
+      
+      const student = currentInputStudent || {
+        semester_1_pai: 0, semester_1_pkn: 0, semester_1_bind: 0, semester_1_bing: 0, semester_1_mtk: 0,
+        semester_1_ipa: 0, semester_1_ips: 0, semester_1_senbud: 0, semester_1_pjok: 0, semester_1_informatika: 0, semester_1_bsunda: 0,
+        semester_2_pai: 0, semester_2_pkn: 0, semester_2_bind: 0, semester_2_bing: 0, semester_2_mtk: 0,
+        semester_2_ipa: 0, semester_2_ips: 0, semester_2_senbud: 0, semester_2_pjok: 0, semester_2_informatika: 0, semester_2_bsunda: 0,
+        semester_3_pai: 0, semester_3_pkn: 0, semester_3_bind: 0, semester_3_bing: 0, semester_3_mtk: 0,
+        semester_3_ipa: 0, semester_3_ips: 0, semester_3_senbud: 0, semester_3_pjok: 0, semester_3_informatika: 0, semester_3_bsunda: 0,
+        semester_4_pai: 0, semester_4_pkn: 0, semester_4_bind: 0, semester_4_bing: 0, semester_4_mtk: 0,
+        semester_4_ipa: 0, semester_4_ips: 0, semester_4_senbud: 0, semester_4_pjok: 0, semester_4_informatika: 0, semester_4_bsunda: 0,
+        semester_5_pai: 0, semester_5_pkn: 0, semester_5_bind: 0, semester_5_bing: 0, semester_5_mtk: 0,
+        semester_5_ipa: 0, semester_5_ips: 0, semester_5_senbud: 0, semester_5_pjok: 0, semester_5_informatika: 0, semester_5_bsunda: 0
+      };
+      
+      const subjects = ['pai', 'pkn', 'bind', 'bing', 'mtk', 'ipa', 'ips', 'senbud', 'pjok', 'informatika', 'bsunda'];
+      
+      progressGrid.innerHTML = [1, 2, 3, 4, 5].map(sem => {
+        const filledCount = subjects.filter(subj => (student[`semester_${sem}_${subj}`] || 0) > 0).length;
+        const percentage = Math.round((filledCount / subjects.length) * 100);
+        const isComplete = percentage === 100;
+        
+        return `
+          <div style="background: ${isComplete ? 'linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%)' : 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)'}; 
+                      color: white; padding: 16px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+            <div style="font-size: 12px; opacity: 0.9; margin-bottom: 4px;">Semester ${sem}</div>
+            <div style="font-size: 24px; font-weight: bold; margin-bottom: 4px;">${percentage}%</div>
+            <div style="font-size: 11px; opacity: 0.8;">${filledCount}/${subjects.length} mapel ${isComplete ? '����' : ''}</div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    // Update input student selector
+    function updateInputStudentSelector() {
+      const select = document.getElementById('student-select-input');
+      const currentValue = select.value;
+      
+      select.innerHTML = '<option value="">-- Pilih Siswa Existing atau Buat Baru --</option>';
+      select.innerHTML += '<option value="__NEW__" style="font-weight: bold; color: #1e3c72;">➕ Tambah Siswa Baru</option>';
+      
+      allRecords.forEach(record => {
+        const option = document.createElement('option');
+        option.value = record.__backendId;
+        option.textContent = `${record.nama_siswa} (${record.nis})`;
+        select.appendChild(option);
+      });
+      
+      if (currentValue && currentValue !== '__NEW__') {
+        const stillExists = allRecords.find(r => r.__backendId === currentValue);
+        if (stillExists) {
+          select.value = currentValue;
+        }
+      }
+    }
+    
+    window.loadStudentData = loadStudentData;
+    window.updateSemesterInputs = updateSemesterInputs;
+    window.clearInputs = clearInputs;
+    window.saveGrades = saveGrades;
+    
+    // Tab switching
+    function switchTab(tab) {
+      currentTab = tab;
+      
+      // Update tab buttons
+      document.getElementById('tab-admin').classList.remove('active');
+      document.getElementById('tab-input').classList.remove('active');
+      document.getElementById('tab-dashboard').classList.remove('active');
+      document.getElementById(`tab-${tab}`).classList.add('active');
+      
+      // Update content
+      document.getElementById('content-admin').classList.remove('active');
+      document.getElementById('content-input').classList.remove('active');
+      document.getElementById('content-dashboard').classList.remove('active');
+      document.getElementById(`content-${tab}`).classList.add('active');
+      
+      if (tab === 'input') {
+        updateInputStudentSelector();
+      } else if (tab === 'dashboard') {
+        updateStudentSelector();
+        updateDashboard();
+      }
+    }
+    
+    // Update student selector dropdown
+    function updateStudentSelector() {
+      const select = document.getElementById('student-select');
+      const currentValue = select.value;
+      
+      select.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+      
+      allRecords.forEach(record => {
+        const option = document.createElement('option');
+        option.value = record.__backendId;
+        option.textContent = `${record.nama_siswa} (${record.nis})`;
+        select.appendChild(option);
+      });
+      
+      // Restore previous selection if still exists
+      if (currentValue) {
+        const stillExists = allRecords.find(r => r.__backendId === currentValue);
+        if (stillExists) {
+          select.value = currentValue;
+        }
+      }
+    }
+    
+    // Show input semester 5 form
+    function showInputSemester5() {
+      const selectValue = document.getElementById('student-select').value;
+      if (!selectValue) return;
+      
+      const student = allRecords.find(r => r.__backendId === selectValue);
+      if (!student) return;
+      
+      // Load existing values
+      const subjects = ['pai', 'pkn', 'bind', 'bing', 'mtk', 'ipa', 'ips', 'senbud', 'pjok', 'informatika', 'bsunda'];
+      subjects.forEach(subj => {
+        const input = document.getElementById(`input-dash-${subj}`);
+        if (input) {
+          input.value = student[`semester_5_${subj}`] || '';
+        }
+      });
+      
+      document.getElementById('input-semester-5-section').style.display = 'block';
+      document.getElementById('input-semester-5-section').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    
+    // Cancel input semester 5
+    function cancelInputSemester5() {
+      document.getElementById('input-semester-5-section').style.display = 'none';
+    }
+    
+    // Save semester 5 grades
+    async function saveSemester5() {
+      if (isLoading) return;
+      
+      const selectValue = document.getElementById('student-select').value;
+      if (!selectValue) return;
+      
+      const student = allRecords.find(r => r.__backendId === selectValue);
+      if (!student) return;
+      
+      isLoading = true;
+      const saveBtn = document.getElementById('save-semester-5-btn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = '⏳ Menyimpan...';
+      
+      const subjects = ['pai', 'pkn', 'bind', 'bing', 'mtk', 'ipa', 'ips', 'senbud', 'pjok', 'informatika', 'bsunda'];
+      const updatedGrades = {};
+      
+      subjects.forEach(subj => {
+        const input = document.getElementById(`input-dash-${subj}`);
+        if (input) {
+          const value = input.value;
+          updatedGrades[`semester_5_${subj}`] = value === '' ? 0 : parseInt(value);
+        }
+      });
+      
+      if (window.dataSdk) {
+        const updatedRecord = { ...student, ...updatedGrades };
+        const result = await window.dataSdk.update(updatedRecord);
+        if (result.isOk) {
+          document.getElementById('input-semester-5-section').style.display = 'none';
+          
+          // Show success notification
+          const notification = document.createElement('div');
+          notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #4CAF50; color: white; padding: 16px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; font-weight: 600;';
+          notification.textContent = '✅ Nilai Semester 5 berhasil disimpan!';
+          document.body.appendChild(notification);
+          setTimeout(() => notification.remove(), 3000);
+          
+          // Refresh dashboard
+          updateDashboard();
+        } else {
+          // Show error notification
+          const notification = document.createElement('div');
+          notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #dc3545; color: white; padding: 16px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; font-weight: 600;';
+          notification.textContent = '❌ Gagal menyimpan nilai. Silakan coba lagi.';
+          document.body.appendChild(notification);
+          setTimeout(() => notification.remove(), 3000);
+        }
+      }
+      
+      isLoading = false;
+      saveBtn.disabled = false;
+      saveBtn.textContent = '💾 Simpan Nilai Semester 5';
+    }
+    
+    window.showInputSemester5 = showInputSemester5;
+    window.cancelInputSemester5 = cancelInputSemester5;
+    window.saveSemester5 = saveSemester5;
+    
+    // Update dashboard with selected student data
+    function updateDashboard() {
+      const selectValue = document.getElementById('student-select').value;
+      
+      if (!selectValue) {
+        document.getElementById('dashboard-content').style.display = 'none';
+        document.getElementById('dashboard-empty').style.display = 'block';
+        document.getElementById('dashboard-print-btn').style.display = 'none';
+        document.getElementById('dashboard-input-btn').style.display = 'none';
+        document.getElementById('input-semester-5-section').style.display = 'none';
+        return;
+      }
+      
+      document.getElementById('dashboard-print-btn').style.display = 'inline-block';
+      document.getElementById('dashboard-input-btn').style.display = 'inline-block';
+      
+      const student = allRecords.find(r => r.__backendId === selectValue);
+      if (!student) return;
+      
+      document.getElementById('dashboard-content').style.display = 'block';
+      document.getElementById('dashboard-empty').style.display = 'none';
+      
+      const subjects = [
+        { name: 'Pendidikan Agama Islam', key: 'pai' },
+        { name: 'Pendidikan Kewarganegaraan', key: 'pkn' },
+        { name: 'Bahasa Indonesia', key: 'bind' },
+        { name: 'Bahasa Inggris', key: 'bing' },
+        { name: 'Matematika', key: 'mtk' },
+        { name: 'Ilmu Pengetahuan Alam', key: 'ipa' },
+        { name: 'Ilmu Pengetahuan Sosial', key: 'ips' },
+        { name: 'Seni Budaya & Prakarya', key: 'senbud' },
+        { name: 'Pendidikan Jasmani & Kesehatan', key: 'pjok' },
+        { name: 'Informatika', key: 'informatika' },
+        { name: 'Bahasa Sunda', key: 'bsunda' }
+      ];
+      
+      // Calculate semester averages
+      const semesterAverages = [1, 2, 3, 4, 5].map(sem => {
+        const total = subjects.reduce((sum, subj) => {
+          return sum + (student[`semester_${sem}_${subj.key}`] || 0);
+        }, 0);
+        return (total / subjects.length).toFixed(2);
+      });
+      
+      // Calculate overall average
+      const overallAvg = (semesterAverages.reduce((sum, avg) => sum + parseFloat(avg), 0) / 5).toFixed(2);
+      
+      // Update semester cards
+      document.getElementById('avg-sem1').textContent = semesterAverages[0];
+      document.getElementById('avg-sem2').textContent = semesterAverages[1];
+      document.getElementById('avg-sem3').textContent = semesterAverages[2];
+      document.getElementById('avg-sem4').textContent = semesterAverages[3];
+      document.getElementById('avg-sem5').textContent = semesterAverages[4];
+      document.getElementById('overall-average').textContent = overallAvg;
+      
+      // Update semester chart
+      updateSemesterChart(semesterAverages);
+      
+      // Update subject chart
+      updateSubjectChart(student, subjects);
+      
+      // Update detail table
+      updateDetailTable(student, subjects);
+    }
+    
+    // Update semester progress chart
+    function updateSemesterChart(averages) {
+      const ctx = document.getElementById('semesterChart').getContext('2d');
+      
+      if (semesterChart) {
+        semesterChart.destroy();
+      }
+      
+      semesterChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Semester 1', 'Semester 2', 'Semester 3', 'Semester 4', 'Semester 5'],
+          datasets: [{
+            label: 'Rata-rata Nilai',
+            data: averages,
+            borderColor: '#1e3c72',
+            backgroundColor: 'rgba(30, 60, 114, 0.1)',
+            borderWidth: 3,
+            tension: 0.4,
+            fill: true,
+            pointRadius: 6,
+            pointBackgroundColor: '#d4af37',
+            pointBorderColor: '#1e3c72',
+            pointBorderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                font: {
+                  size: 14,
+                  weight: 'bold'
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                font: {
+                  size: 12
+                }
+              },
+              grid: {
+                color: 'rgba(0, 0, 0, 0.1)'
+              }
+            },
+            x: {
+              ticks: {
+                font: {
+                  size: 12
+                }
+              },
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    // Update subject comparison chart
+    function updateSubjectChart(student, subjects) {
+      const ctx = document.getElementById('subjectChart').getContext('2d');
+      
+      if (subjectChart) {
+        subjectChart.destroy();
+      }
+      
+      const datasets = [1, 2, 3, 4, 5].map(sem => {
+        const colors = ['#1e3c72', '#2a5298', '#4a7bc8', '#6a9ad8', '#8ab9e8'];
+        return {
+          label: `Semester ${sem}`,
+          data: subjects.map(subj => student[`semester_${sem}_${subj.key}`] || 0),
+          backgroundColor: colors[sem - 1],
+          borderWidth: 0
+        };
+      });
+      
+      subjectChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: subjects.map(s => s.name),
+          datasets: datasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                font: {
+                  size: 12,
+                  weight: 'bold'
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                font: {
+                  size: 11
+                }
+              },
+              grid: {
+                color: 'rgba(0, 0, 0, 0.1)'
+              }
+            },
+            x: {
+              ticks: {
+                font: {
+                  size: 10
+                },
+                maxRotation: 45,
+                minRotation: 45
+              },
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    // Update detail table
+    function updateDetailTable(student, subjects) {
+      const tbody = document.getElementById('detail-table-body');
+      tbody.innerHTML = '';
+      
+      subjects.forEach(subj => {
+        const row = document.createElement('tr');
+        const values = [1, 2, 3, 4, 5].map(sem => student[`semester_${sem}_${subj.key}`] || 0);
+        const avg = (values.reduce((sum, val) => sum + val, 0) / 5).toFixed(2);
+        
+        row.innerHTML = `
+          <td>${subj.name}</td>
+          <td>${values[0]}</td>
+          <td>${values[1]}</td>
+          <td>${values[2]}</td>
+          <td>${values[3]}</td>
+          <td>${values[4]}</td>
+          <td style="font-weight: bold; background: #d4af37; color: #1e3c72;">${avg}</td>
+        `;
+        tbody.appendChild(row);
+      });
+      
+      // Add average row
+      const avgRow = document.createElement('tr');
+      avgRow.className = 'avg-row';
+      const semAvgs = [1, 2, 3, 4, 5].map(sem => {
+        const total = subjects.reduce((sum, subj) => sum + (student[`semester_${sem}_${subj.key}`] || 0), 0);
+        return (total / subjects.length).toFixed(2);
+      });
+      const overallAvg = (semAvgs.reduce((sum, avg) => sum + parseFloat(avg), 0) / 5).toFixed(2);
+      
+      avgRow.innerHTML = `
+        <td>RATA-RATA</td>
+        <td>${semAvgs[0]}</td>
+        <td>${semAvgs[1]}</td>
+        <td>${semAvgs[2]}</td>
+        <td>${semAvgs[3]}</td>
+        <td>${semAvgs[4]}</td>
+        <td style="font-weight: bold;">${overallAvg}</td>
+      `;
+      tbody.appendChild(avgRow);
+    }
+    
+    window.switchTab = switchTab;
+    window.updateDashboard = updateDashboard;
+    
+    // Set default tab on load
+    switchTab('admin');
+
+    initApp();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a55b17cc716807d',t:'MTc2NDI4OTE2Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
